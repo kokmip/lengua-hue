@@ -1,5 +1,5 @@
 from src.nlp.european import EuropeanAnalyzer
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 app = FastAPI(title="LenguaHUe")
 class AnalyzeRequest(BaseModel):
@@ -12,6 +12,12 @@ analyzers = {
 @app.post("/analyze")
 def analyze_text(request: AnalyzeRequest):
     analyzer = analyzers.get(request.lang_code)
+    if not analyzer:
+        raise HTTPException(
+            status_code=400,
+            detail="Selected language is not supported."
+        )
+    
     tokens = analyzer.analyze(request.text)
     return {
         "language": request.lang_code,
