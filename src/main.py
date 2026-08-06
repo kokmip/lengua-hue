@@ -1,11 +1,13 @@
 from src.nlp.european import EuropeanAnalyzer
 from fastapi import FastAPI, HTTPException, Depends
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session 
 from src.database.connection import SessionLocal, init_db
 from contextlib import asynccontextmanager
 from src.database.CRUD import create_word, get_all_words, get_word_by_lemma_and_context
 from src.services.llm import LLMService
+from src.services.anki import generate_anki_deck
 class AnalyzeRequest(BaseModel):
     text: str
     lang_code: str = "en"
@@ -70,3 +72,10 @@ async def translate_word(request: TranslateRequest, db: Session = Depends(get_db
 @app.get("/words")
 def read_all_words(db: Session = Depends(get_db)):
     return get_all_words(db)
+@app.get("/export/anki")
+async def anki_export(db: Session = Depends(get_db)):
+    collect_words = get_all_words(db)
+    if not collect_words:
+        raise HTTPException(status_code=400, detail="Vocabulary is empty")
+    file_path = generate_anki_deck(collect_words)
+    return FileResponse(path=file_path, filename="lenguahue_deck.apkg", media_type="application/octet-stream")
