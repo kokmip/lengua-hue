@@ -30,6 +30,7 @@ class EuropeanAnalyzer:
                     "word" : token.text,
                     "lemma" : lemma,
                     "cefr" : cefr,
-                    "zipf" : zipf
+                    "zipf" : zipf,
+                    "sentence": token.sent.text.strip()
                 })
         return results

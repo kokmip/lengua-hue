@@ -13,3 +13,5 @@ def get_word_by_lemma(db: Session, lemma):
 def get_all_words(db: Session):
     stmt = select(Word).order_by(Word.created_at.desc())
     return db.scalars(stmt).all()
+def get_word_by_lemma_and_context(db, lemma, context):
+    db.query(Word).filter(Word.lemma == lemma, Word.context == context).first()

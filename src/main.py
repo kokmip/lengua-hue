@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session 
 from src.database.connection import SessionLocal, init_db
 from contextlib import asynccontextmanager
-from src.database.CRUD import create_word, get_all_words
+from src.database.CRUD import create_word, get_all_words, get_word_by_lemma_and_context
 from src.services.llm import LLMService
 class AnalyzeRequest(BaseModel):
     text: str
@@ -45,24 +45,28 @@ class TranslateRequest(BaseModel):
     target_lang: str = "ru"
 @app.post("/translate")
 async def translate_word(request: TranslateRequest, db: Session = Depends(get_db)):
-    llm_service = LLMService()
-    llm_result = await llm_service.get_contextual_translation(
-        word=request.word,
-        lemma=request.lemma,
-        context=request.context,
-        target_lang=request.target_lang
-    )
-    saved_word = create_word(
-        db=db,
-        word=request.word,
-        lemma=request.lemma,
-        context=request.context,
-        explanation=llm_result["explanation"],
-        translation=llm_result["translation"],
-        example_sentence=llm_result["example_sentence"],
-        example_translation=llm_result["example_translation"]
-    )
-    return saved_word
+    existing_word = get_word_by_lemma_and_context(db, request.lemma, request.context)
+    if existing_word != None:
+        return existing_word
+    else:
+        llm_service = LLMService()
+        llm_result = await llm_service.get_contextual_translation(
+            word=request.word,
+            lemma=request.lemma,
+            context=request.context,
+            target_lang=request.target_lang
+        )
+        saved_word = create_word(
+            db=db,
+            word=request.word,
+            lemma=request.lemma,
+            context=request.context,
+            explanation=llm_result["explanation"],
+            translation=llm_result["translation"],
+            example_sentence=llm_result["example_sentence"],
+            example_translation=llm_result["example_translation"]
+        )
+        return saved_word
 @app.get("/words")
 def read_all_words(db: Session = Depends(get_db)):
     return get_all_words(db)
