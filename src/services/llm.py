@@ -11,7 +11,7 @@ class LLMService:
         api_key=self.api_key,
     )
         self.model_name = model_name
-    def get_contextual_translation(self, word: str, lemma: str, context: str, target_lang: str = "ru") -> dict:
+    async def get_contextual_translation(self, word: str, lemma: str, context: str, target_lang: str = "ru") -> dict:
         prompt = f"""You are professional linguist with 20 years experience. Your entry data is word: {word}, lemma: {lemma}, context: {context}
         and your goal is make a JSON-object with next keys: 
         1. translation: the excact translation of lemma for this context in {target_lang}
